@@ -242,7 +242,7 @@ class FromOriginalModelMixin:
                 local_files_only=local_files_only,
                 revision=revision,
             )
-            print(f"from_single_file() pretrained_model_link_or_path_or_dict: {pretrained_model_link_or_path_or_dict}, local_files_only: {local_files_only}, checkpoint: {checkpoint}")
+            print(f"from_single_file() pretrained_model_link_or_path_or_dict: {pretrained_model_link_or_path_or_dict}, local_files_only: {local_files_only}, checkpoint: {str(checkpoint)[:50]}")
         if quantization_config is not None:
             hf_quantizer = DiffusersAutoQuantizer.from_config(quantization_config)
             hf_quantizer.validate_environment()
@@ -319,7 +319,7 @@ class FromOriginalModelMixin:
             diffusers_model_config.update(model_kwargs)
 
         checkpoint_mapping_kwargs = _get_mapping_function_kwargs(checkpoint_mapping_fn, **kwargs)
-        print(f"from_single_file() diffusers_model_config: {diffusers_model_config}, checkpoint: {checkpoint}, checkpoint_mapping_kwargs: {checkpoint_mapping_kwargs}")
+        print(f"from_single_file() diffusers_model_config: {diffusers_model_config}, checkpoint: {str(checkpoint)[:50]}, checkpoint_mapping_kwargs: {checkpoint_mapping_kwargs}")
         diffusers_format_checkpoint = checkpoint_mapping_fn(
             config=diffusers_model_config, checkpoint=checkpoint, **checkpoint_mapping_kwargs
         )
