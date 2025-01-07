@@ -338,6 +338,7 @@ def is_valid_url(url):
 
 
 def _extract_repo_id_and_weights_name(pretrained_model_name_or_path):
+    print(f"_extract_repo_id_and_weights_name()")
     if not is_valid_url(pretrained_model_name_or_path):
         raise ValueError("Invalid `pretrained_model_name_or_path` provided. Please set it to a valid URL.")
 
@@ -358,6 +359,7 @@ def _extract_repo_id_and_weights_name(pretrained_model_name_or_path):
 
 
 def _is_model_weights_in_cached_folder(cached_folder, name):
+    print(f"_is_model_weights_in_cached_folder()")
     pretrained_model_name_or_path = os.path.join(cached_folder, name)
     weights_exist = False
 
@@ -381,6 +383,7 @@ def load_single_file_checkpoint(
     local_files_only=None,
     revision=None,
 ):
+    print(f"load_single_file_checkpoint()")
     if os.path.isfile(pretrained_model_link_or_path):
         pretrained_model_link_or_path = pretrained_model_link_or_path
 
@@ -407,6 +410,7 @@ def load_single_file_checkpoint(
 
 
 def fetch_original_config(original_config_file, local_files_only=False):
+    print(f"fetch_original_config()")
     if os.path.isfile(original_config_file):
         with open(original_config_file, "r") as fp:
             original_config_file = fp.read()
@@ -497,6 +501,7 @@ def is_clip_model_in_single_file(class_obj, checkpoint):
 
 
 def infer_diffusers_model_type(checkpoint):
+    print(f"infer_diffusers_model_type()")
     if (
         CHECKPOINT_KEY_NAMES["inpainting"] in checkpoint
         and checkpoint[CHECKPOINT_KEY_NAMES["inpainting"]].shape[1] == 9
@@ -653,6 +658,7 @@ def infer_diffusers_model_type(checkpoint):
 
 
 def fetch_diffusers_config(checkpoint):
+    print(f"fetch_diffusers_config()")
     model_type = infer_diffusers_model_type(checkpoint)
     model_path = DIFFUSERS_DEFAULT_PIPELINE_PATHS[model_type]
     model_path = copy.deepcopy(model_path)
@@ -661,6 +667,7 @@ def fetch_diffusers_config(checkpoint):
 
 
 def set_image_size(checkpoint, image_size=None):
+    print(f"set_image_size()")
     if image_size:
         return image_size
 
@@ -1605,6 +1612,7 @@ def _legacy_load_scheduler(
     original_config=None,
     **kwargs,
 ):
+    print(f"_legacy_load_scheduler()")
     scheduler_type = kwargs.get("scheduler_type", None)
     prediction_type = kwargs.get("prediction_type", None)
 
@@ -2093,6 +2101,7 @@ def convert_animatediff_checkpoint_to_diffusers(checkpoint, **kwargs):
 
 
 def convert_flux_transformer_checkpoint_to_diffusers(checkpoint, **kwargs):
+    print(f"convert_flux_transformer_checkpoint_to_diffusers()")
     converted_state_dict = {}
     keys = list(checkpoint.keys())
     for k in keys:
