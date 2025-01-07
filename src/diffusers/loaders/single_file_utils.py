@@ -1504,6 +1504,7 @@ def create_diffusers_clip_model_from_ldm(
     local_files_only=None,
     is_legacy_loading=False,
 ):
+    print(f"create_diffusers_clip_model_from_ldm()")
     if config:
         config = {"pretrained_model_name_or_path": config}
     else:
@@ -1745,6 +1746,7 @@ def _legacy_load_scheduler(
 
 
 def _legacy_load_clip_tokenizer(cls, checkpoint, config=None, local_files_only=False):
+    print(f"_legacy_load_clip_tokenizer()")
     if config:
         config = {"pretrained_model_name_or_path": config}
     else:
@@ -2040,6 +2042,7 @@ def create_diffusers_t5_model_from_checkpoint(
     torch_dtype=None,
     local_files_only=None,
 ):
+    print(f"create_diffusers_t5_model_from_checkpoint()")
     if config:
         config = {"pretrained_model_name_or_path": config}
     else:
