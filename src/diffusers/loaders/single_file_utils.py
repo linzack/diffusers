@@ -597,11 +597,16 @@ def infer_diffusers_model_type(checkpoint):
         if any(
             g in checkpoint for g in ["guidance_in.in_layer.bias", "model.diffusion_model.guidance_in.in_layer.bias"]
         ):
-            if checkpoint["img_in.weight"].shape[1] == 384:
-                model_type = "flux-fill"
-
-            elif checkpoint["img_in.weight"].shape[1] == 128:
-                model_type = "flux-depth"
+            if "img_in.weight" in checkpoint:
+                try:
+                    if checkpoint["img_in.weight"].shape[1] == 384:
+                        model_type = "flux-fill"
+                    elif checkpoint["img_in.weight"].shape[1] == 128:
+                        model_type = "flux-depth"
+                    else:
+                        model_type = "flux-dev"
+                except AttributeError:
+                    model_type = "flux-dev"
             else:
                 model_type = "flux-dev"
         else:
