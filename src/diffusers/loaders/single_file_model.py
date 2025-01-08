@@ -289,6 +289,7 @@ class FromOriginalModelMixin:
                     )
 
             else:
+                print(f"from_single_file() both input config is None, find config with fetch_diffusers_config()")
                 config = fetch_diffusers_config(checkpoint)
                 default_pretrained_model_config_name = config["pretrained_model_name_or_path"]
 

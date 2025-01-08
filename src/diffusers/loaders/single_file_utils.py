@@ -662,7 +662,8 @@ def fetch_diffusers_config(checkpoint):
     model_type = infer_diffusers_model_type(checkpoint)
     model_path = DIFFUSERS_DEFAULT_PIPELINE_PATHS[model_type]
     model_path = copy.deepcopy(model_path)
-
+    
+    print(f"fetch_diffusers_config() model_type: {model_type}, model_path: {model_path}")
     return model_path
 
 
