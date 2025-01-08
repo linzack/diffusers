@@ -352,6 +352,8 @@ class ConfigMixin:
         user_agent = http_user_agent(user_agent)
 
         pretrained_model_name_or_path = str(pretrained_model_name_or_path)
+        
+        print(f"load_config() cls.config_name: {cls.config_name}")
 
         if cls.config_name is None:
             raise ValueError(
