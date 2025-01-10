@@ -157,6 +157,7 @@ class ConfigMixin:
             kwargs (`Dict[str, Any]`, *optional*):
                 Additional keyword arguments passed along to the [`~utils.PushToHubMixin.push_to_hub`] method.
         """
+        print(f"save_config(), type(self).__name__: {type(self).__name__}")
         if os.path.isfile(save_directory):
             raise AssertionError(f"Provided path ({save_directory}) should be a directory, not a file")
 
@@ -580,6 +581,7 @@ class ConfigMixin:
             `str`:
                 String containing all the attributes that make up the configuration instance in JSON format.
         """
+        print(f"to_json_string()")
         config_dict = self._internal_dict if hasattr(self, "_internal_dict") else {}
         config_dict["_class_name"] = self.__class__.__name__
         config_dict["_diffusers_version"] = __version__
@@ -605,6 +607,7 @@ class ConfigMixin:
         # pop the `_pre_quantization_dtype` as torch.dtypes are not serializable.
         _ = config_dict.pop("_pre_quantization_dtype", None)
 
+        print(f"to_json_string() config_dict: {config_dict}")
         return json.dumps(config_dict, indent=2, sort_keys=True) + "\n"
 
     def to_json_file(self, json_file_path: Union[str, os.PathLike]):

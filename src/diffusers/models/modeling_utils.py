@@ -358,6 +358,7 @@ class ModelMixin(torch.nn.Module, PushToHubMixin):
             kwargs (`Dict[str, Any]`, *optional*):
                 Additional keyword arguments passed along to the [`~utils.PushToHubMixin.push_to_hub`] method.
         """
+        print(f"save_pretrained(), type(self).__name__: {type(self).__name__}")
         if os.path.isfile(save_directory):
             logger.error(f"Provided path ({save_directory}) should be a directory, not a file")
             return
@@ -399,6 +400,7 @@ class ModelMixin(torch.nn.Module, PushToHubMixin):
         if is_main_process:
             model_to_save.save_config(save_directory)
 
+        print(f"save_pretrained(), model_to_save.state_dict()")
         # Save the model
         state_dict = model_to_save.state_dict()
 
@@ -426,6 +428,7 @@ class ModelMixin(torch.nn.Module, PushToHubMixin):
                     os.remove(full_filename)
 
         for filename, tensors in state_dict_split.filename_to_tensors.items():
+            print(f"save_pretrained(), filename: {filename}")
             shard = {tensor: state_dict[tensor] for tensor in tensors}
             filepath = os.path.join(save_directory, filename)
             if safe_serialization:
