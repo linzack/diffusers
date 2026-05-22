@@ -1956,7 +1956,10 @@ class ModularPipeline(ConfigMixin, PushToHubMixin):
                 model_cls = component.__class__
 
             save_method_name = None
+            print(f"[DEBUG SAVE] Starting search for component '{component_name}' of type {model_cls}...", flush=True)
+            print(f"[DEBUG SAVE] MRO bases: {[base.__name__ for base in model_cls.__mro__]}", flush=True)
             for library_name, library_classes in LOADABLE_CLASSES.items():
+                print(f"[DEBUG SAVE] Library: {library_name}, in sys.modules: {library_name in sys.modules}", flush=True)
                 if library_name in sys.modules:
                     library = importlib.import_module(library_name)
                 else:
@@ -1967,14 +1970,31 @@ class ModularPipeline(ConfigMixin, PushToHubMixin):
 
                 for base_class, save_load_methods in library_classes.items():
                     class_candidate = getattr(library, base_class, None)
-                    if class_candidate is not None and issubclass(model_cls, class_candidate):
-                        save_method_name = save_load_methods[0]
-                        break
+                    print(f"[DEBUG SAVE] Checking base_class: {base_class}, class_candidate in library: {class_candidate is not None}", flush=True)
+                    if class_candidate is not None:
+                        is_sub = issubclass(model_cls, class_candidate)
+                        print(f"[DEBUG SAVE] issubclass check: {is_sub}", flush=True)
+                        if is_sub:
+                            save_method_name = save_load_methods[0]
+                            break
+                        mro_match = any(base.__name__ == base_class for base in model_cls.__mro__)
+                        print(f"[DEBUG SAVE] MRO name check: {mro_match}", flush=True)
+                        if mro_match:
+                            print(f"[DEBUG SAVE] Matched {model_cls.__name__} to base class {base_class} via MRO fallback.", flush=True)
+                            save_method_name = save_load_methods[0]
+                            break
+                    else:
+                        mro_match = any(base.__name__ == base_class for base in model_cls.__mro__)
+                        print(f"[DEBUG SAVE] (class_candidate is None) MRO name check: {mro_match}", flush=True)
+                        if mro_match:
+                            print(f"[DEBUG SAVE] Matched {model_cls.__name__} to base class {base_class} via MRO fallback (candidate was None).", flush=True)
+                            save_method_name = save_load_methods[0]
+                            break
                 if save_method_name is not None:
                     break
 
             if save_method_name is None:
-                logger.warning(f"self.{component_name}={component} of type {type(component)} cannot be saved.")
+                logger.warning(f"self.{component_name} of type {type(component)} cannot be saved.")
                 continue
 
             save_method = getattr(component, save_method_name)
