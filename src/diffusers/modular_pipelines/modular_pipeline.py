@@ -1688,18 +1688,23 @@ class ModularPipeline(ConfigMixin, PushToHubMixin):
             )
 
         if blocks is None:
+            blocks_class = None
             if modular_config_dict is not None:
                 blocks_class_name = modular_config_dict.get("_blocks_class_name")
             else:
                 blocks_class_name = self.default_blocks_name
+            if blocks_class_name is None:
+                blocks_class_name = self.default_blocks_name
+
             if blocks_class_name is not None:
                 diffusers_module = importlib.import_module("diffusers")
                 blocks_class = getattr(diffusers_module, blocks_class_name, None)
                 # If the blocks_class is not found or is a base class (e.g. SequentialPipelineBlocks saved by from_blocks_dict) with empty block_classes
                 # fall back to default_blocks_name
-                if blocks_class is None or not blocks_class.block_classes:
+                if blocks_class is None or not getattr(blocks_class, "block_classes", None):
                     blocks_class_name = self.default_blocks_name
-                    blocks_class = getattr(diffusers_module, blocks_class_name)
+                    if blocks_class_name is not None:
+                        blocks_class = getattr(diffusers_module, blocks_class_name, None)
 
             if blocks_class is not None:
                 blocks = blocks_class()
