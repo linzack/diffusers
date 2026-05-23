@@ -1038,7 +1038,8 @@ class DiffusionPipeline(ConfigMixin, PushToHubMixin):
         if not is_torch_dist_rank_zero():
             logging_tqdm_kwargs["disable"] = True
 
-        for name, (library_name, class_name) in logging.tqdm(init_dict.items(), **logging_tqdm_kwargs):
+        for name, value in logging.tqdm(init_dict.items(), **logging_tqdm_kwargs):
+            library_name, class_name = value[0], value[1]
             # 7.1 device_map shenanigans
             if final_device_map is not None:
                 if isinstance(final_device_map, dict) and len(final_device_map) > 0:

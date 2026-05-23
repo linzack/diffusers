@@ -666,7 +666,8 @@ def _get_final_device_map(device_map, pipeline_class, passed_class_obj, init_dic
 
     # Load each module in the pipeline on a meta device so that we can derive the device map.
     init_empty_modules = {}
-    for name, (library_name, class_name) in init_dict.items():
+    for name, value in init_dict.items():
+        library_name, class_name = value[0], value[1]
         if class_name.startswith("Flax"):
             raise ValueError("Flax pipelines are not supported with `device_map`.")
 
