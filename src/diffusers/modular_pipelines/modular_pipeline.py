@@ -2029,7 +2029,8 @@ class ModularPipeline(ConfigMixin, PushToHubMixin):
 
             has_no_load_id = not hasattr(component, "_diffusers_load_id") or component._diffusers_load_id == "null"
             if overwrite_modular_index or has_no_load_id:
-                library, class_name, component_spec_dict = self.config[component_name]
+                _, _, component_spec_dict = self.config[component_name]
+                library, class_name = _fetch_class_library_tuple(component)
                 component_spec_dict["pretrained_model_name_or_path"] = repo_id if push_to_hub else save_directory
                 component_spec_dict["subfolder"] = component_name
                 self.register_to_config(**{component_name: (library, class_name, component_spec_dict)})
