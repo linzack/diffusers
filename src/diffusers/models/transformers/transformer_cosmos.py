@@ -704,6 +704,8 @@ class CosmosTransformer3DModel(ModelMixin, ConfigMixin, FromOriginalModelMixin, 
             hidden_states = torch.cat([hidden_states, condition_mask], dim=1)
 
         if self.config.concat_padding_mask:
+            if padding_mask is None:
+                padding_mask = torch.ones((1, 1, height, width), dtype=hidden_states.dtype, device=hidden_states.device)
             padding_mask_resized = transforms.functional.resize(
                 padding_mask, list(hidden_states.shape[-2:]), interpolation=transforms.InterpolationMode.NEAREST
             )
