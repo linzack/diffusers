@@ -362,8 +362,8 @@ class AnimaPrepareLatentsStep(ModularPipelineBlocks):
             generator=block_state.generator,
             latents=block_state.latents,
         )
-        block_state.padding_mask = block_state.latents.new_zeros(
-            1, 1, block_state.height, block_state.width, dtype=block_state.dtype
+        block_state.padding_mask = block_state.latents.new_ones(
+            1, 1, block_state.latents.shape[-2], block_state.latents.shape[-1], dtype=block_state.dtype
         )
 
         self.set_block_state(state, block_state)
