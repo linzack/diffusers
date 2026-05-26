@@ -478,15 +478,27 @@ class CosmosRotaryPosEmbed(nn.Module):
         self.t_ntk_factor = rope_scale[0] ** (self.dim_t / (self.dim_t - 2))
 
     def forward(self, hidden_states: torch.Tensor, fps: int | None = None) -> tuple[torch.Tensor, torch.Tensor]:
-        batch_size, num_channels, num_frames, height, width = hidden_states.shape
-        pe_size = [num_frames // self.patch_size[0], height // self.patch_size[1], width // self.patch_size[2]]
         device = hidden_states.device
+
+        # Preserve shape operations as dynamic tensors in the graph to prevent tracer constant-folding
+        num_frames = torch.tensor(hidden_states.shape[2], dtype=torch.int32, device=device)
+        height = torch.tensor(hidden_states.shape[3], dtype=torch.int32, device=device)
+        width = torch.tensor(hidden_states.shape[4], dtype=torch.int32, device=device)
+
+        # Use torch.div with rounding_mode='floor' to keep operations dynamic
+        pe_t = torch.div(num_frames, self.patch_size[0], rounding_mode='floor')
+        pe_h = torch.div(height, self.patch_size[1], rounding_mode='floor')
+        pe_w = torch.div(width, self.patch_size[2], rounding_mode='floor')
 
         h_theta = 10000.0 * self.h_ntk_factor
         w_theta = 10000.0 * self.w_ntk_factor
         t_theta = 10000.0 * self.t_ntk_factor
 
-        seq = torch.arange(max(self.max_size), device=device, dtype=torch.float32)
+        # Generate dynamic range tensors directly in the trace graph
+        seq_t = torch.arange(pe_t, device=device, dtype=torch.float32)
+        seq_h = torch.arange(pe_h, device=device, dtype=torch.float32)
+        seq_w = torch.arange(pe_w, device=device, dtype=torch.float32)
+
         dim_h_range = (
             torch.arange(0, self.dim_h, 2, device=device, dtype=torch.float32)[: (self.dim_h // 2)] / self.dim_h
         )
@@ -500,18 +512,18 @@ class CosmosRotaryPosEmbed(nn.Module):
         w_spatial_freqs = 1.0 / (w_theta**dim_w_range)
         temporal_freqs = 1.0 / (t_theta**dim_t_range)
 
-        emb_h = torch.outer(seq[: pe_size[1]], h_spatial_freqs)[None, :, None, :].repeat(pe_size[0], 1, pe_size[2], 1)
-        emb_w = torch.outer(seq[: pe_size[2]], w_spatial_freqs)[None, None, :, :].repeat(pe_size[0], pe_size[1], 1, 1)
+        emb_h = torch.outer(seq_h, h_spatial_freqs)[None, :, None, :].repeat(pe_t, 1, pe_w, 1)
+        emb_w = torch.outer(seq_w, w_spatial_freqs)[None, None, :, :].repeat(pe_t, pe_h, 1, 1)
 
         # Apply sequence scaling in temporal dimension
         if fps is None:
             # Images
-            emb_t = torch.outer(seq[: pe_size[0]], temporal_freqs)
+            emb_t = torch.outer(seq_t, temporal_freqs)
         else:
             # Videos
-            emb_t = torch.outer(seq[: pe_size[0]] / fps * self.base_fps, temporal_freqs)
+            emb_t = torch.outer(seq_t / fps * self.base_fps, temporal_freqs)
 
-        emb_t = emb_t[:, None, None, :].repeat(1, pe_size[1], pe_size[2], 1)
+        emb_t = emb_t[:, None, None, :].repeat(1, pe_h, pe_w, 1)
         freqs = torch.cat([emb_t, emb_h, emb_w] * 2, dim=-1).flatten(0, 2).float()
         cos = torch.cos(freqs)
         sin = torch.sin(freqs)
