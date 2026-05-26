@@ -2489,6 +2489,33 @@ class ModularPipeline(ConfigMixin, PushToHubMixin):
                 return True
         return False
 
+    def enable_attention_slicing(self, slice_size: str | int = "auto"):
+        r"""
+        Enable sliced attention computation. When this option is enabled, the attention module splits the input tensor
+        in slices to compute attention in several steps. For more than one attention head, the computation is performed
+        sequentially over each head. This is useful to save some memory in exchange for a small speed decrease.
+
+        Args:
+            slice_size (`str` or `int`, *optional*, defaults to `"auto"`):
+                When `"auto"`, halves the input to the attention heads, so attention will be computed in two steps. If
+                `"max"`, maximum amount of memory will be saved by running only one slice at a time. If a number is
+                provided, uses as many slices as `attention_head_dim // slice_size`. In this case, `attention_head_dim`
+                must be a multiple of `slice_size`.
+        """
+        self.set_attention_slice(slice_size)
+
+    def disable_attention_slicing(self):
+        r"""
+        Disable sliced attention computation. If `enable_attention_slicing` was previously called, attention is
+        computed in one step.
+        """
+        self.enable_attention_slicing(None)
+
+    def set_attention_slice(self, slice_size: int | None):
+        modules = [m for m in self.components.values() if isinstance(m, torch.nn.Module) and hasattr(m, "set_attention_slice")]
+        for module in modules:
+            module.set_attention_slice(slice_size)
+
     # Modified from diffusers.pipelines.pipeline_utils.DiffusionPipeline.to
     def to(self, *args, **kwargs) -> Self:
         r"""
