@@ -50,6 +50,8 @@ class AnimaVaeDecoderStep(ModularPipelineBlocks):
         block_state = self.get_block_state(state)
 
         latents = block_state.latents.to(components.vae.dtype)
+        tag = "oanima" if "OV" in components.__class__.__name__ else "danima"
+        print(f"[{tag}] Step 9 - Decoding denoised latents with VAE. Latents shape: {latents.shape} | dtype: {latents.dtype}", flush=True)
         latents_mean = (
             torch.tensor(components.vae.config.latents_mean)
             .view(1, components.vae.config.z_dim, 1, 1, 1)
@@ -61,6 +63,7 @@ class AnimaVaeDecoderStep(ModularPipelineBlocks):
         latents = latents / latents_std + latents_mean
 
         block_state.images = components.vae.decode(latents, return_dict=False)[0][:, :, 0]
+        print(f"[{tag}]   -> VAE Decoded raw images shape: {block_state.images.shape} | dtype: {block_state.images.dtype}", flush=True)
 
         self.set_block_state(state, block_state)
         return components, state
@@ -111,6 +114,8 @@ class AnimaProcessImagesOutputStep(ModularPipelineBlocks):
         block_state = self.get_block_state(state)
         self.check_inputs(block_state.output_type)
 
+        tag = "oanima" if "OV" in components.__class__.__name__ else "danima"
+        print(f"[{tag}] Step 10 - Post-processing VAE outputs. Output format: '{block_state.output_type}'", flush=True)
         block_state.images = components.image_processor.postprocess(
             image=block_state.images,
             output_type=block_state.output_type,

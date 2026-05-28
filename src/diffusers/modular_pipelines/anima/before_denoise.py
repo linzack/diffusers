@@ -165,6 +165,8 @@ class AnimaTextConditioningStep(ModularPipelineBlocks):
         conditioning_dtype = components.text_conditioner.dtype
         output_dtype = components.transformer.dtype
 
+        tag = "oanima" if "OV" in components.__class__.__name__ else "danima"
+        print(f"[{tag}] Step 2 - Initializing text conditioner mapping layer.", flush=True)
         block_state.prompt_embeds = self._condition_prompt_embeds(
             components,
             qwen_prompt_embeds=block_state.qwen_prompt_embeds,
@@ -175,6 +177,7 @@ class AnimaTextConditioningStep(ModularPipelineBlocks):
             conditioning_dtype=conditioning_dtype,
             output_dtype=output_dtype,
         )
+        print(f"[{tag}]   -> Conditioned prompt embeddings shape: {block_state.prompt_embeds.shape} | dtype: {block_state.prompt_embeds.dtype}", flush=True)
 
         block_state.negative_prompt_embeds = None
         if block_state.negative_qwen_prompt_embeds is not None:
@@ -252,6 +255,8 @@ class AnimaTextInputStep(ModularPipelineBlocks):
         block_state.dtype = components.transformer.dtype
 
         _, seq_len, _ = block_state.prompt_embeds.shape
+        tag = "oanima" if "OV" in components.__class__.__name__ else "danima"
+        print(f"[{tag}] Step 3 - Performing batch expansion mapping. Images per prompt: {block_state.num_images_per_prompt}", flush=True)
         block_state.prompt_embeds = block_state.prompt_embeds.repeat(1, block_state.num_images_per_prompt, 1)
         block_state.prompt_embeds = block_state.prompt_embeds.view(
             block_state.batch_size * block_state.num_images_per_prompt, seq_len, -1
@@ -266,6 +271,7 @@ class AnimaTextInputStep(ModularPipelineBlocks):
                 block_state.batch_size * block_state.num_images_per_prompt, seq_len, -1
             )
 
+        print(f"[{tag}]   -> Expanded prompt embeds shape: {block_state.prompt_embeds.shape} | batch size: {block_state.batch_size * block_state.num_images_per_prompt}", flush=True)
         self.set_block_state(state, block_state)
         return components, state
 
@@ -351,6 +357,8 @@ class AnimaPrepareLatentsStep(ModularPipelineBlocks):
         self.check_inputs(components, block_state)
 
         device = components._execution_device
+        tag = "oanima" if "OV" in components.__class__.__name__ else "danima"
+        print(f"[{tag}] Step 4 - Preparing noisy latents. Target dimensions: {block_state.width}x{block_state.height}", flush=True)
         block_state.latents = self.prepare_latents(
             batch_size=block_state.batch_size * block_state.num_images_per_prompt,
             num_channels_latents=components.num_channels_latents,
@@ -365,6 +373,7 @@ class AnimaPrepareLatentsStep(ModularPipelineBlocks):
         block_state.padding_mask = block_state.latents.new_ones(
             1, 1, block_state.latents.shape[-2], block_state.latents.shape[-1], dtype=block_state.dtype
         )
+        print(f"[{tag}]   -> Generated latents shape: {block_state.latents.shape} | padding_mask shape: {block_state.padding_mask.shape}", flush=True)
 
         self.set_block_state(state, block_state)
         return components, state
@@ -405,11 +414,14 @@ class AnimaSetTimestepsStep(ModularPipelineBlocks):
             if block_state.sigmas is None
             else block_state.sigmas
         )
+        tag = "oanima" if "OV" in components.__class__.__name__ else "danima"
+        print(f"[{tag}] Step 5 - Retrieving timesteps for {block_state.num_inference_steps} steps.", flush=True)
         block_state.timesteps, block_state.num_inference_steps = retrieve_timesteps(
             components.scheduler,
             device=device,
             sigmas=sigmas,
         )
+        print(f"[{tag}]   -> Active scheduler steps: {len(block_state.timesteps)} | Timesteps: {block_state.timesteps}", flush=True)
         components.scheduler.set_begin_index(0)
 
         self.set_block_state(state, block_state)

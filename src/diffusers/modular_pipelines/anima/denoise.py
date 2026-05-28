@@ -127,6 +127,11 @@ class AnimaLoopDenoiser(ModularPipelineBlocks):
         if i == 0:
             print(f"[Anima Dynamic Scale] Verification: components.guider.guidance_scale is now {components.guider.guidance_scale}", flush=True)
 
+        tag = "oanima" if "OV" in components.__class__.__name__ else "danima"
+        if i % 5 == 0:
+            print(f"[{tag}] Step 7 - Denoising loop step {i}/{block_state.num_inference_steps} | Timestep: {t.item():.4f}", flush=True)
+            print(f"[{tag}]   -> latent_model_input shape: {block_state.latent_model_input.shape} | timestep shape: {block_state.timestep.shape}", flush=True)
+
         components.guider.set_state(step=i, num_inference_steps=block_state.num_inference_steps, timestep=t)
         guider_state = components.guider.prepare_inputs_from_block_state(block_state, self._guider_input_fields)
 
@@ -136,6 +141,18 @@ class AnimaLoopDenoiser(ModularPipelineBlocks):
                 key: getattr(guider_state_batch, key).to(block_state.dtype)
                 for key in self._guider_input_fields.keys()
             }
+            # Dynamically generate attention_mask to match runtime batch size and sequence length,
+            # ensuring OpenVINO receives a matching runtime mask instead of falling back to compiled dummy shapes.
+            if "encoder_hidden_states" in cond_kwargs:
+                ref_tensor = cond_kwargs["encoder_hidden_states"]
+                cond_kwargs["attention_mask"] = torch.ones(
+                    (ref_tensor.shape[0], ref_tensor.shape[1]),
+                    dtype=torch.int64,
+                    device=ref_tensor.device
+                )
+            if i % 10 == 0:
+                for k, v in cond_kwargs.items():
+                    print(f"[{tag}]   -> Invoking transformer block. Conditional arg '{k}' shape: {v.shape}", flush=True)
             guider_state_batch.noise_pred = components.transformer(
                 hidden_states=block_state.latent_model_input,
                 timestep=block_state.timestep,

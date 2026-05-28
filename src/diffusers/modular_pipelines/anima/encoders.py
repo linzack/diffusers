@@ -236,6 +236,8 @@ class AnimaTextEncoderStep(ModularPipelineBlocks):
         block_state = self.get_block_state(state)
         self.check_inputs(block_state)
 
+        tag = "oanima" if "OV" in components.__class__.__name__ else "danima"
+        print(f"[{tag}] Step 1 - Encoding prompts. Prompt: '{block_state.prompt}' | Max Length: {block_state.max_sequence_length}", flush=True)
         prompt_outputs = self.encode_prompt(
             components=components,
             prompt=block_state.prompt,
@@ -246,6 +248,8 @@ class AnimaTextEncoderStep(ModularPipelineBlocks):
             dtype=components.text_encoder.dtype,
         )
         for name, value in prompt_outputs.items():
+            if isinstance(value, torch.Tensor):
+                print(f"[{tag}]   -> Generated embedding parameter '{name}' shape: {value.shape} | dtype: {value.dtype}", flush=True)
             setattr(block_state, name, value)
 
         self.set_block_state(state, block_state)
