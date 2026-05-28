@@ -722,7 +722,7 @@ class CosmosTransformer3DModel(ModelMixin, ConfigMixin, FromOriginalModelMixin, 
                 padding_mask, list(hidden_states.shape[-2:]), interpolation=transforms.InterpolationMode.NEAREST
             )
             hidden_states = torch.cat(
-                [hidden_states, padding_mask_resized.unsqueeze(2).repeat(batch_size, 1, num_frames, 1, 1)], dim=1
+                [hidden_states, padding_mask_resized.unsqueeze(2).expand(batch_size, 1, num_frames, -1, -1)], dim=1
             )
 
         if attention_mask is not None:

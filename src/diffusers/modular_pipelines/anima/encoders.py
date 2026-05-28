@@ -49,6 +49,7 @@ class AnimaTextEncoderStep(ModularPipelineBlocks):
             InputParam.template("prompt"),
             InputParam.template("negative_prompt"),
             InputParam.template("max_sequence_length"),
+            InputParam("guidance_scale", default=4.0, type_hint=float, description="Classifier-Free Guidance scale."),
         ]
 
     @property

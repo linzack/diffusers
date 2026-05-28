@@ -93,6 +93,7 @@ class AnimaLoopDenoiser(ModularPipelineBlocks):
                 type_hint=torch.Tensor,
                 description="Cosmos padding mask for image latents.",
             ),
+            InputParam("guidance_scale", default=4.0, type_hint=float, description="Classifier-Free Guidance scale."),
             InputParam(
                 kwargs_type="denoiser_input_fields",
                 description="The conditional model inputs for the Anima denoiser.",
@@ -118,6 +119,14 @@ class AnimaLoopDenoiser(ModularPipelineBlocks):
     def __call__(
         self, components: AnimaModularPipeline, block_state: BlockState, i: int, t: torch.Tensor
     ) -> PipelineState:
+        # Dynamically align guider blending weight to match the call-time scale
+        call_scale = getattr(block_state, "guidance_scale", 4.0)
+        if i == 0:
+            print(f"[Anima Dynamic Scale] Initializing step 0 CFG weight scaling. Before: {components.guider.guidance_scale} -> Target: {call_scale}", flush=True)
+        components.guider.guidance_scale = call_scale
+        if i == 0:
+            print(f"[Anima Dynamic Scale] Verification: components.guider.guidance_scale is now {components.guider.guidance_scale}", flush=True)
+
         components.guider.set_state(step=i, num_inference_steps=block_state.num_inference_steps, timestep=t)
         guider_state = components.guider.prepare_inputs_from_block_state(block_state, self._guider_input_fields)
 
