@@ -161,6 +161,8 @@ class AnimaLoopDenoiser(ModularPipelineBlocks):
                 return_dict=False,
                 **cond_kwargs,
             )[0]
+            if i % 10 == 0:
+                print(f"[{tag}]   -> Transformer output shape: {guider_state_batch.noise_pred.shape} | dtype: {guider_state_batch.noise_pred.dtype} | mean: {guider_state_batch.noise_pred.mean().item():.6f} | std: {guider_state_batch.noise_pred.std().item():.6f}", flush=True)
             components.guider.cleanup_models(components.transformer)
 
         block_state.noise_pred = components.guider(guider_state)[0]
