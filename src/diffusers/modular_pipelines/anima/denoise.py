@@ -151,9 +151,8 @@ class AnimaLoopDenoiser(ModularPipelineBlocks):
                     dtype=torch.int64 if is_ov else torch.bool,
                     device=ref_tensor.device
                 )
-            if i % 10 == 0:
-                for k, v in cond_kwargs.items():
-                    print(f"[{tag}]   -> Invoking transformer block. Conditional arg '{k}' shape: {v.shape}", flush=True)
+            for k, v in cond_kwargs.items():
+                print(f"[{tag}]   -> Invoking transformer block. Conditional arg '{k}' shape: {v.shape}", flush=True)
             guider_state_batch.noise_pred = components.transformer(
                 hidden_states=block_state.latent_model_input,
                 timestep=block_state.timestep,
@@ -161,8 +160,12 @@ class AnimaLoopDenoiser(ModularPipelineBlocks):
                 return_dict=False,
                 **cond_kwargs,
             )[0]
-            if i % 10 == 0:
-                print(f"[{tag}]   -> Transformer output shape: {guider_state_batch.noise_pred.shape} | dtype: {guider_state_batch.noise_pred.dtype} | mean: {guider_state_batch.noise_pred.mean().item():.6f} | std: {guider_state_batch.noise_pred.std().item():.6f}", flush=True)
+            print(f"[{tag}]   -> Transformer output shape: {guider_state_batch.noise_pred.shape} | dtype: {guider_state_batch.noise_pred.dtype} | mean: {guider_state_batch.noise_pred.mean().item():.6f} | std: {guider_state_batch.noise_pred.std().item():.6f}", flush=True)
+            
+            # Save step 0 tensor for similarity comparison validation
+            if i == 0:
+                torch.save(guider_state_batch.noise_pred.cpu(), f"{tag}_step0.pt")
+                
             components.guider.cleanup_models(components.transformer)
 
         block_state.noise_pred = components.guider(guider_state)[0]
