@@ -145,9 +145,10 @@ class AnimaLoopDenoiser(ModularPipelineBlocks):
             # ensuring OpenVINO receives a matching runtime mask instead of falling back to compiled dummy shapes.
             if "encoder_hidden_states" in cond_kwargs:
                 ref_tensor = cond_kwargs["encoder_hidden_states"]
+                is_ov = "OV" in components.transformer.__class__.__name__
                 cond_kwargs["attention_mask"] = torch.ones(
                     (ref_tensor.shape[0], ref_tensor.shape[1]),
-                    dtype=torch.int64,
+                    dtype=torch.int64 if is_ov else torch.bool,
                     device=ref_tensor.device
                 )
             if i % 10 == 0:

@@ -294,6 +294,15 @@ class AnimaTextConditioner(ModelMixin, ConfigMixin, PeftAdapterMixin):
         source_attention_mask: torch.Tensor | None = None,
         **kwargs,
     ) -> torch.Tensor:
+        # Diagnostic logging hook
+        print(f"[danima] TextConditioner forward inputs:", flush=True)
+        print(f"  -> source_hidden_states shape: {source_hidden_states.shape} | dtype: {source_hidden_states.dtype}", flush=True)
+        print(f"  -> target_input_ids shape: {target_input_ids.shape} | dtype: {target_input_ids.dtype}", flush=True)
+        if target_attention_mask is not None:
+            print(f"  -> target_attention_mask shape: {target_attention_mask.shape} | dtype: {target_attention_mask.dtype}", flush=True)
+        if source_attention_mask is not None:
+            print(f"  -> source_attention_mask shape: {source_attention_mask.shape} | dtype: {source_attention_mask.dtype}", flush=True)
+
         target_attention_mask = self._prepare_attention_mask(target_attention_mask)
         source_attention_mask = self._prepare_attention_mask(source_attention_mask)
 
@@ -334,4 +343,5 @@ class AnimaTextConditioner(ModelMixin, ConfigMixin, PeftAdapterMixin):
         if hidden_states.shape[1] < self.config.min_sequence_length:
             hidden_states = F.pad(hidden_states, (0, 0, 0, self.config.min_sequence_length - hidden_states.shape[1]))
 
+        print(f"[danima] TextConditioner output shape: {hidden_states.shape} | dtype: {hidden_states.dtype} | mean: {hidden_states.mean().item():.6f}", flush=True)
         return hidden_states
